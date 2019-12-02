@@ -1,0 +1,85 @@
+---
+title: "rRNA methylation in Paramxyovirus infection"
+author: "Marina Alexander"
+date: "29/11/2019"
+output: html_document
+  code_folding: hide
+---
+
+```{r setup, include=FALSE}
+
+knitr::opts_chunk$set(
+  echo = TRUE,
+  warning = FALSE,
+  message = FALSE,
+  fig.align = 'center'
+)
+
+
+# remind R where to look for libraries
+.libPaths(c("C:/Users/ale097/Data School/Packages"))
+# load libraries
+library(tidyverse)
+library(knitr)
+library(wesanderson)
+# read in the files 
+ribometh <- read_csv("data/Erales_2017_ribomethseq.csv")
+snoRNAs <- read_csv("data/Jorjani_2016_snoRNA_atlas.csv")
+hostgenes <- read_csv("data/Deffrasnes_2016_hostgenes_wildtypeHeV.csv")
+
+```
+
+## snoRNAs involved in rRNA methylation by FBL in Hela cells
+
+Erales et al. used Ribo-meth-seq to identify sites in the 28S rRNA subunit that were reduced in methylation by siFBL. Plotted here are 6 sites with a greater than 40% reduction from siNEG. I then downloaded data from the Jorjani snoRNA ATLAS to identify the snoRNAs that guide methylation to these sites. These are colored by their conservation with the order amniotes > tetropodes > vertebrates > deuterotomes most recent to most distantly evolved. Also from the Atlas I retrived their host gene. snoRNAs are "hosted" within introns of genes that are co-regulated in their transcription and usually act in the same pathway. 
+
+
+```{r snoRNAs and their host genes that work with FBL}
+# tidy data  
+ribometh_tidy <- ribometh %>%
+  mutate(mean_diff_percent = sub("%","", mean_diff )) %>% 
+  mutate(mean_diff_percent = sub("-", "", mean_diff_percent)) %>% 
+  mutate(mean_diff_percent = as.numeric(mean_diff_percent)) %>% 
+  filter(mean_diff_percent > 40) %>% 
+  filter(SNORD != "NA")
+
+
+filtered_snoRNAs <- snoRNAs %>% 
+  filter(Name == "SNORD18B"|Name == "SNORD68"| 
+           Name == "SNORD48"|Name == "SNORD24"| 
+           Name == "SNORD88C") %>%
+  select(Name, Expression, Conservation, `Host gene`) %>% 
+  rename(SNORD = Name)
+
+FBL_snoRNA <- left_join(ribometh_tidy, filtered_snoRNAs, by = "SNORD")
+
+snoRNAplot <- ggplot(FBL_snoRNA, aes(x= site, y= mean_diff_percent)) +
+  geom_point()+
+  theme(axis.text.x = element_text(angle = 90)) +
+  geom_text(aes(label = SNORD, color = Conservation), hjust = 0.5, vjust = -0.5, size = 3) +
+  geom_text(aes(label = `Host gene`), hjust = 0.5, vjust = 1.5, size = 2.5)+
+  labs( y = "% change in methylation by siFBL",
+        x = "28S rRNA site")
+
+
+ggsave(filename = "results/snoRNAplot.png", plot = snoRNAplot, width = 15, height = 15, dpi = 600, units = "cm")
+
+```
+
+## RPL13 and RPL7A were hits in the screen
+
+You can also embed plots, for example:
+
+```{r siRNA screen targets involved in translation}
+
+hostgenes_tidy <- hostgenes %>% 
+  filter(signif == "Yes") %>% 
+  filter(Translation == "yes") %>% 
+  select(gene, Summary) %>% 
+  arrange(Summary) %>% 
+  table()
+
+
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.

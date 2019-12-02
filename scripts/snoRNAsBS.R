@@ -10,7 +10,9 @@ ribometh_tidy <- ribometh %>%
   mutate(mean_diff_percent = sub("%","", mean_diff )) %>% 
   mutate(mean_diff_percent = sub("-", "", mean_diff_percent)) %>% 
   mutate(mean_diff_percent = as.numeric(mean_diff_percent)) %>% 
-  filter(mean_diff_percent > 40)
+  filter(mean_diff_percent > 40) %>% 
+  filter(SNORD != "NA")
+
 
 filtered_snoRNAs <- snoRNAs %>% 
   filter(Name == "SNORD18B"|Name == "SNORD68"| 
@@ -29,7 +31,6 @@ ggplot(FBL_snoRNA, aes(x= site, y= mean_diff_percent)) +
   labs( y = "% change in methylation by siFBL",
         x = "28S rRNA site")
 
-#evolution goes amniotes, tetrapodes, vertebrates, deuterostomes
 
 
             
