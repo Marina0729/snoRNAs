@@ -2,8 +2,9 @@
 title: "rRNA methylation in Paramxyovirus infection"
 author: "Marina Alexander"
 date: "29/11/2019"
-output: html_document
-  code_folding: hide
+output: 
+  html_document:
+    code_folding: hide
 ---
 
 ```{r setup, include=FALSE}
@@ -22,6 +23,7 @@ knitr::opts_chunk$set(
 library(tidyverse)
 library(knitr)
 library(wesanderson)
+library(kableExtra)
 # read in the files 
 ribometh <- read_csv("data/Erales_2017_ribomethseq.csv")
 snoRNAs <- read_csv("data/Jorjani_2016_snoRNA_atlas.csv")
@@ -53,7 +55,7 @@ filtered_snoRNAs <- snoRNAs %>%
 
 FBL_snoRNA <- left_join(ribometh_tidy, filtered_snoRNAs, by = "SNORD")
 
-snoRNAplot <- ggplot(FBL_snoRNA, aes(x= site, y= mean_diff_percent)) +
+ggplot(FBL_snoRNA, aes(x= site, y= mean_diff_percent)) +
   geom_point()+
   theme(axis.text.x = element_text(angle = 90)) +
   geom_text(aes(label = SNORD, color = Conservation), hjust = 0.5, vjust = -0.5, size = 3) +
@@ -62,24 +64,23 @@ snoRNAplot <- ggplot(FBL_snoRNA, aes(x= site, y= mean_diff_percent)) +
         x = "28S rRNA site")
 
 
-ggsave(filename = "results/snoRNAplot.png", plot = snoRNAplot, width = 15, height = 15, dpi = 600, units = "cm")
-
 ```
 
 ## RPL13 and RPL7A were hits in the screen
-
-You can also embed plots, for example:
-
+Deffrasnes et al identified 14 genes involved in protein translation that when knocked down reduced TCID50 of Hendra virus with a p-value <0.01. Listed here. 
 ```{r siRNA screen targets involved in translation}
 
 hostgenes_tidy <- hostgenes %>% 
   filter(signif == "Yes") %>% 
   filter(Translation == "yes") %>% 
-  select(gene, Summary) %>% 
+  select(gene, Summary) %>%
+  filter(Summary == "***"|Summary =="**") %>%
   arrange(Summary) %>% 
-  table()
+  rename("Significance" = "Summary")
+
+knitr::kable(hostgenes_tidy, caption = 'Table 1. Translation genes required for Hendra virus infection')
 
 
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
