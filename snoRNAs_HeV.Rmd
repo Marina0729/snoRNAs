@@ -24,10 +24,15 @@ library(tidyverse)
 library(knitr)
 library(wesanderson)
 library(kableExtra)
+install.packages("unglue")
+library(unglue)
 # read in the files 
 ribometh <- read_csv("data/Erales_2017_ribomethseq.csv")
 snoRNAs <- read_csv("data/Jorjani_2016_snoRNA_atlas.csv")
 hostgenes <- read_csv("data/Deffrasnes_2016_hostgenes_wildtypeHeV.csv")
+
+snoRNAs %>%
+  arrange(Name)
 
 ```
 
@@ -71,14 +76,38 @@ Deffrasnes et al identified 14 genes involved in protein translation that when k
 hostgenes_tidy <- hostgenes %>% 
   filter(signif == "Yes") %>% 
   filter(Translation == "yes") %>% 
-  select(gene, Summary) %>%
-  filter(Summary == "***"|Summary =="**") %>%
-  arrange(Summary) %>% 
-  rename("Significance" = "Summary")
+  arrange(TCID50)
 
 knitr::kable(hostgenes_tidy, caption = 'Table 1. Translation genes required for Hendra virus infection')
 
 
 ```
 
+```{r Anderson dataset}
+
+Anderson_panviral <- read_csv("data/Anderson_ABCE1_panviral_hostgenes.csv")
+
+
+```
+
+```{r Complete modification map of human 80s ribosome}
+
+RNAmodMap80S <- read_csv("data/Isobe_NAR_2018_80S_modifications_frequency.csv") %>% 
+  rename(subunit = rRNA) %>% 
+  rename(site = "Position assigned in this study")
+
+FBL_snoRNA_modratio <- FBL_snoRNA %>% 
+  unglue_unnest(site, "{mod=\\D+}{site}") %>%
+  mutate(site = as.numeric(site)) %>% 
+  left_join(RNAmodMap80S, by = "site") %>%
+  rename(subunit = subunit.x ) %>%
+  rename("host_gene" = "Host gene") %>% 
+  rename("stoichiometry" = "Modification ratio") %>% 
+  select(mod, site, mean_diff_percent, sd, stoichiometry, SNORD, host_gene)
+
+write_csv(FBL_snoRNA_modratio,"results/FBL_SNORD_Hostgenes_modratio.csv") 
+  
+  
+
+```
 
